@@ -3,7 +3,8 @@ import Dashboard from './pages/Dashboard';
 import LogWorkout from './pages/LogWorkout';
 import History from './pages/History';
 import Progress from './pages/Progress';
-import { HomeIcon, PlusCircleIcon, ClockIcon, ChartBarIcon } from './components/Icons';
+import Plan from './pages/Plan';
+import { HomeIcon, PlusCircleIcon, ClockIcon, ChartBarIcon, CalendarIcon } from './components/Icons';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/log" element={<LogWorkout />} />
+            <Route path="/plan" element={<Plan />} />
             <Route path="/history" element={<History />} />
             <Route path="/progress" element={<Progress />} />
           </Routes>
@@ -28,6 +30,10 @@ export default function App() {
           <NavLink to="/log" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
             <PlusCircleIcon />
             <span>Log</span>
+          </NavLink>
+          <NavLink to="/plan" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
+            <CalendarIcon />
+            <span>Program</span>
           </NavLink>
           <NavLink to="/history" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
             <ClockIcon />

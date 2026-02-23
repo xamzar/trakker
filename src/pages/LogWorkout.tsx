@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import type { Exercise, Set, WorkoutSession } from '../types';
-import { saveSession } from '../storage';
+import type { Exercise, Set } from '../types';
+import { getLastSetsForExercise, saveSession } from '../storage';
 import { PlusIcon, TrashIcon } from '../components/Icons';
 
 function newSet(): Set {
@@ -13,10 +13,18 @@ function newExercise(): Exercise {
   return { id: uuidv4(), name: '', sets: [newSet()] };
 }
 
+interface LocationState {
+  workoutName?: string;
+  exercises?: Exercise[];
+}
+
 export default function LogWorkout() {
   const navigate = useNavigate();
-  const [workoutName, setWorkoutName] = useState('');
-  const [exercises, setExercises] = useState<Exercise[]>([newExercise()]);
+  const location = useLocation();
+  const state = (location.state ?? {}) as LocationState;
+
+  const [workoutName, setWorkoutName] = useState(state.workoutName ?? '');
+  const [exercises, setExercises] = useState<Exercise[]>(state.exercises ?? [newExercise()]);
 
   function addExercise() {
     setExercises(prev => [...prev, newExercise()]);
@@ -27,7 +35,17 @@ export default function LogWorkout() {
   }
 
   function updateExerciseName(id: string, name: string) {
-    setExercises(prev => prev.map(e => e.id === id ? { ...e, name } : e));
+    setExercises(prev => prev.map(e => {
+      if (e.id !== id) return e;
+      // Only auto-populate from history when the exercise still has its single
+      // default set (weight=0, reps=10), so any user-entered sets are preserved.
+      const isDefaultState = e.sets.length === 1 && e.sets[0].reps === 10 && e.sets[0].weight === 0;
+      const lastSets = (name.trim() && isDefaultState) ? getLastSetsForExercise(name.trim()) : null;
+      const sets = lastSets
+        ? lastSets.map(s => ({ id: uuidv4(), reps: s.reps, weight: s.weight }))
+        : e.sets;
+      return { ...e, name, sets };
+    }));
   }
 
   function addSet(exerciseId: string) {
@@ -57,14 +75,22 @@ export default function LogWorkout() {
       alert('Please add at least one exercise with a name.');
       return;
     }
-    const session: WorkoutSession = {
+    saveSession({
       id: uuidv4(),
       date: new Date().toISOString(),
       name,
       exercises: validExercises,
-    };
-    saveSession(session);
+    });
     navigate('/');
+  }
+
+  /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
+  function weightHint(exerciseName: string): string | null {
+    if (!exerciseName.trim()) return null;
+    const last = getLastSetsForExercise(exerciseName.trim());
+    if (!last || last.length === 0) return null;
+    const topWeight = Math.max(...last.map(s => s.weight));
+    return `Last: ${last.length}×${topWeight} kg`;
   }
 
   return (
@@ -83,71 +109,79 @@ export default function LogWorkout() {
       </div>
 
       <div className="space-y-4">
-        {exercises.map((exercise, exIdx) => (
-          <div key={exercise.id} className="bg-gray-800 rounded-xl p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder={`Exercise ${exIdx + 1} name`}
-                value={exercise.name}
-                onChange={e => updateExerciseName(exercise.id, e.target.value)}
-                className="flex-1 bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:outline-none focus:border-emerald-500"
-              />
-              <button onClick={() => removeExercise(exercise.id)} className="text-red-400 p-1.5 hover:bg-gray-700 rounded-lg">
-                <TrashIcon />
+        {exercises.map((exercise, exIdx) => {
+          const hint = weightHint(exercise.name);
+          return (
+            <div key={exercise.id} className="bg-gray-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder={`Exercise ${exIdx + 1} name`}
+                    value={exercise.name}
+                    onChange={e => updateExerciseName(exercise.id, e.target.value)}
+                    className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:outline-none focus:border-emerald-500"
+                  />
+                  {hint && (
+                    <p className="text-xs text-emerald-400 mt-0.5 pl-1">{hint}</p>
+                  )}
+                </div>
+                <button onClick={() => removeExercise(exercise.id)} className="text-red-400 p-1.5 hover:bg-gray-700 rounded-lg self-start">
+                  <TrashIcon />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="grid grid-cols-12 text-xs text-gray-500 font-medium px-1">
+                  <span className="col-span-2">Set</span>
+                  <span className="col-span-5 text-center">Reps</span>
+                  <span className="col-span-5 text-center">Weight (kg)</span>
+                </div>
+                {exercise.sets.map((set, setIdx) => (
+                  <div key={set.id} className="grid grid-cols-12 items-center gap-1">
+                    <span className="col-span-2 text-xs text-gray-500 text-center">{setIdx + 1}</span>
+                    <div className="col-span-5 flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => updateSet(exercise.id, set.id, 'reps', Math.max(1, set.reps - 1))}
+                        className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
+                      >−</button>
+                      <span className="w-8 text-center text-sm font-medium">{set.reps}</span>
+                      <button
+                        onClick={() => updateSet(exercise.id, set.id, 'reps', set.reps + 1)}
+                        className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
+                      >+</button>
+                    </div>
+                    <div className="col-span-4 flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => updateSet(exercise.id, set.id, 'weight', Math.max(0, set.weight - 2.5))}
+                        className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
+                      >−</button>
+                      <span className="w-10 text-center text-sm font-medium">{set.weight}</span>
+                      <button
+                        onClick={() => updateSet(exercise.id, set.id, 'weight', set.weight + 2.5)}
+                        className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
+                      >+</button>
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      {exercise.sets.length > 1 && (
+                        <button onClick={() => removeSet(exercise.id, set.id)} className="text-gray-600 hover:text-red-400">
+                          <TrashIcon />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => addSet(exercise.id)}
+                className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
+              >
+                <PlusIcon /> Add Set
               </button>
             </div>
-
-            <div className="space-y-2">
-              <div className="grid grid-cols-12 text-xs text-gray-500 font-medium px-1">
-                <span className="col-span-2">Set</span>
-                <span className="col-span-5 text-center">Reps</span>
-                <span className="col-span-5 text-center">Weight (kg)</span>
-              </div>
-              {exercise.sets.map((set, setIdx) => (
-                <div key={set.id} className="grid grid-cols-12 items-center gap-1">
-                  <span className="col-span-2 text-xs text-gray-500 text-center">{setIdx + 1}</span>
-                  <div className="col-span-5 flex items-center justify-center gap-1">
-                    <button
-                      onClick={() => updateSet(exercise.id, set.id, 'reps', Math.max(1, set.reps - 1))}
-                      className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
-                    >−</button>
-                    <span className="w-8 text-center text-sm font-medium">{set.reps}</span>
-                    <button
-                      onClick={() => updateSet(exercise.id, set.id, 'reps', set.reps + 1)}
-                      className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
-                    >+</button>
-                  </div>
-                  <div className="col-span-4 flex items-center justify-center gap-1">
-                    <button
-                      onClick={() => updateSet(exercise.id, set.id, 'weight', Math.max(0, set.weight - 2.5))}
-                      className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
-                    >−</button>
-                    <span className="w-10 text-center text-sm font-medium">{set.weight}</span>
-                    <button
-                      onClick={() => updateSet(exercise.id, set.id, 'weight', set.weight + 2.5)}
-                      className="w-7 h-7 bg-gray-700 rounded-lg text-white text-lg leading-none flex items-center justify-center"
-                    >+</button>
-                  </div>
-                  <div className="col-span-1 flex justify-end">
-                    {exercise.sets.length > 1 && (
-                      <button onClick={() => removeSet(exercise.id, set.id)} className="text-gray-600 hover:text-red-400">
-                        <TrashIcon />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => addSet(exercise.id)}
-              className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 mt-1"
-            >
-              <PlusIcon /> Add Set
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <button

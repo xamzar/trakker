@@ -128,7 +128,10 @@
         </div>
         <div class="inline">
           <div>
-            <label for="rpe">How easy was it? (RPE)</label>
+            <div class="flex-between">
+              <label for="rpe">How easy was it? (RPE)</label>
+              <span class="muted" id="rpe-display">7/10</span>
+            </div>
             <input type="range" id="rpe" min="1" max="10" value="7" />
             <div class="field-note">1 = Very easy, 10 = All-out</div>
           </div>
@@ -178,9 +181,13 @@
 
   <script>
     const STORAGE_KEY = 'trakkerSets';
+    const BRZYCKI_NUMERATOR = 36;
+    const BRZYCKI_CAP = 37; // denominator hits zero at r=37; cap to avoid undefined.
+    const DATETIME_LOCAL_LENGTH = 16; // trims to YYYY-MM-DDTHH:mm for datetime-local inputs.
     const formulas = {
       Epley: (w, r) => w * (1 + r / 30),
-      Brzycki: (w, r) => r >= 37 ? null : w * (36 / (37 - r)),
+      // Returning null renders '-' in the table and skips points in the chart (spanGaps).
+      Brzycki: (w, r) => r >= BRZYCKI_CAP ? null : w * (BRZYCKI_NUMERATOR / (BRZYCKI_CAP - r)),
       Lombardi: (w, r) => w * Math.pow(r, 0.1)
     };
 
@@ -190,6 +197,7 @@
     const setCount = document.getElementById('set-count');
     const dateField = document.getElementById('date');
     const rpeField = document.getElementById('rpe');
+    const rpeDisplay = document.getElementById('rpe-display');
     const chartCtx = document.getElementById('rm-chart').getContext('2d');
     let chart;
 
@@ -215,8 +223,12 @@
       return entries;
     }
 
+    function getSortedSets() {
+      return loadSets().sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
     function updateRows() {
-      const sets = loadSets().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const sets = getSortedSets();
       setRows.innerHTML = '';
       setCount.textContent = sets.length ? `${sets.length} set${sets.length > 1 ? 's' : ''} logged` : 'No sets yet';
 
@@ -267,9 +279,7 @@
 
     function buildChart() {
       const selected = filter.value;
-      const sets = loadSets()
-        .filter(s => s.exercise === selected)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      const sets = getSortedSets().filter(s => s.exercise === selected);
 
       const labels = sets.map(s => formatDate(s.date));
       const datasets = Object.keys(formulas).map((name, idx) => {
@@ -321,14 +331,19 @@
       updateExerciseFilter();
       buildChart();
       form.reset();
-      dateField.value = new Date().toISOString().slice(0,16);
+      dateField.value = new Date().toISOString().slice(0, DATETIME_LOCAL_LENGTH);
       rpeField.value = 7;
+      rpeDisplay.textContent = `${rpeField.value}/10`;
     });
 
     filter.addEventListener('change', buildChart);
+    rpeField.addEventListener('input', () => {
+      rpeDisplay.textContent = `${rpeField.value}/10`;
+    });
 
     function init() {
-      dateField.value = new Date().toISOString().slice(0,16);
+      dateField.value = new Date().toISOString().slice(0, DATETIME_LOCAL_LENGTH);
+      rpeDisplay.textContent = `${rpeField.value}/10`;
       updateRows();
       updateExerciseFilter();
       buildChart();

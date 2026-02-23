@@ -1,0 +1,24 @@
+{
+  "name": "trakker",
+  "version": "1.0.0",
+  "description": "An app that can assist the process of tracking your workouts and visualize progress.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No automated tests specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xamzar/trakker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/xamzar/trakker/issues"
+  },
+  "homepage": "https://github.com/xamzar/trakker#readme",
+  "dependencies": {
+    "chart.js": "^4.5.1"
+  }
+}

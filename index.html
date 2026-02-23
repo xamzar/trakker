@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trakker | 1RM Progress</title>
+  <script src="./node_modules/chart.js/dist/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #22c55e;
+      --muted: #cbd5e1;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: white;
+      padding: 24px;
+    }
+    h1, h2 { margin: 0 0 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    label { display: block; color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%;
+      background: #0b1224;
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--accent);
+    }
+    button {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      color: white;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+      margin-top: 8px;
+    }
+    button:hover { filter: brightness(1.05); }
+    .inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .table th, .table td {
+      border: 1px solid var(--border);
+      padding: 8px;
+    }
+    .table th {
+      text-align: left;
+      color: var(--muted);
+      background: #0b1224;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .muted { color: var(--muted); font-size: 14px; }
+    .chart-container { position: relative; height: 360px; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .field-note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <header class="flex-between">
+    <div>
+      <h1>Trakker</h1>
+      <p class="muted">Track sets, perceived effort, and watch your 1RM trend over time.</p>
+    </div>
+    <div class="pill">1RM Progress</div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Log a set</h2>
+      <form id="set-form">
+        <div class="inline">
+          <div>
+            <label for="date">Date & Time</label>
+            <input type="datetime-local" id="date" required />
+          </div>
+          <div>
+            <label for="exercise">Exercise</label>
+            <input type="text" id="exercise" placeholder="e.g. Back Squat" required />
+          </div>
+        </div>
+        <div class="inline">
+          <div>
+            <label for="weight">Weight (kg)</label>
+            <input type="number" id="weight" min="1" step="0.5" required />
+          </div>
+          <div>
+            <label for="reps">Reps</label>
+            <input type="number" id="reps" min="1" step="1" required />
+          </div>
+        </div>
+        <div class="inline">
+          <div>
+            <label for="rpe">How easy was it? (RPE)</label>
+            <input type="range" id="rpe" min="1" max="10" value="7" />
+            <div class="field-note">1 = Very easy, 10 = All-out</div>
+          </div>
+          <div>
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" rows="3" placeholder="Felt smooth, paused reps, etc."></textarea>
+          </div>
+        </div>
+        <button type="submit">Add Set</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="flex-between">
+        <h2>1RM Graph</h2>
+        <select id="exercise-filter"></select>
+      </div>
+      <p class="muted" style="margin-top:-4px;">Shows multiple 1RM estimates per set for the selected exercise.</p>
+      <div class="chart-container">
+        <canvas id="rm-chart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px;">
+    <div class="flex-between">
+      <h2>Logged sets</h2>
+      <div class="muted" id="set-count"></div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Exercise</th>
+          <th>Weight</th>
+          <th>Reps</th>
+          <th>Ease (RPE)</th>
+          <th>Epley</th>
+          <th>Brzycki</th>
+          <th>Lombardi</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="set-rows"></tbody>
+    </table>
+  </section>
+
+  <script>
+    const STORAGE_KEY = 'trakkerSets';
+    const formulas = {
+      Epley: (w, r) => w * (1 + r / 30),
+      Brzycki: (w, r) => r >= 37 ? null : w * (36 / (37 - r)),
+      Lombardi: (w, r) => w * Math.pow(r, 0.1)
+    };
+
+    const form = document.getElementById('set-form');
+    const setRows = document.getElementById('set-rows');
+    const filter = document.getElementById('exercise-filter');
+    const setCount = document.getElementById('set-count');
+    const dateField = document.getElementById('date');
+    const rpeField = document.getElementById('rpe');
+    const chartCtx = document.getElementById('rm-chart').getContext('2d');
+    let chart;
+
+    function loadSets() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    }
+
+    function saveSets(sets) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sets));
+    }
+
+    function formatDate(value) {
+      return new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function computeEstimates(weight, reps) {
+      const entries = {};
+      for (const [name, fn] of Object.entries(formulas)) {
+        const val = fn(weight, reps);
+        entries[name] = Number.isFinite(val) ? Math.round(val * 10) / 10 : null;
+      }
+      return entries;
+    }
+
+    function updateRows() {
+      const sets = loadSets().sort((a, b) => new Date(a.date) - new Date(b.date));
+      setRows.innerHTML = '';
+      setCount.textContent = sets.length ? `${sets.length} set${sets.length > 1 ? 's' : ''} logged` : 'No sets yet';
+
+      sets.forEach(set => {
+        const estimates = computeEstimates(set.weight, set.reps);
+        const row = document.createElement('tr');
+        const cells = [
+          formatDate(set.date),
+          set.exercise,
+          `${set.weight} kg`,
+          String(set.reps),
+          `${set.rpe}/10`,
+          estimates.Epley ?? '-',
+          estimates.Brzycki ?? '-',
+          estimates.Lombardi ?? '-',
+          set.notes || ''
+        ];
+        cells.forEach(value => {
+          const td = document.createElement('td');
+          td.textContent = value;
+          row.appendChild(td);
+        });
+        setRows.append(row);
+      });
+    }
+
+    function updateExerciseFilter() {
+      const sets = loadSets();
+      const exercises = Array.from(new Set(sets.map(s => s.exercise))).sort();
+      filter.innerHTML = '';
+      if (!exercises.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Add an exercise to see trends';
+        filter.appendChild(opt);
+        return;
+      }
+      exercises.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        filter.appendChild(opt);
+      });
+      if (!filter.value && exercises.length) {
+        filter.value = exercises[0];
+      }
+    }
+
+    function buildChart() {
+      const selected = filter.value;
+      const sets = loadSets()
+        .filter(s => s.exercise === selected)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const labels = sets.map(s => formatDate(s.date));
+      const datasets = Object.keys(formulas).map((name, idx) => {
+        const colors = ['#22c55e', '#38bdf8', '#c084fc'];
+        return {
+          label: `${name} 1RM`,
+          data: sets.map(s => computeEstimates(s.weight, s.reps)[name]),
+          borderColor: colors[idx % colors.length],
+          backgroundColor: colors[idx % colors.length] + '55',
+          tension: 0.2,
+          spanGaps: true
+        };
+      });
+
+      if (chart) chart.destroy();
+      chart = new Chart(chartCtx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#e5e7eb' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' } },
+            y: {
+              ticks: { color: '#94a3b8' },
+              title: { display: true, text: 'Estimated 1RM (kg)', color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const exercise = document.getElementById('exercise').value.trim();
+      const date = document.getElementById('date').value;
+      const weight = Number(document.getElementById('weight').value);
+      const reps = Number(document.getElementById('reps').value);
+      const rpe = Number(rpeField.value);
+      const notes = document.getElementById('notes').value.trim();
+
+      if (!exercise || !date || weight <= 0 || reps <= 0) return;
+
+      const sets = loadSets();
+      sets.push({ date, exercise, weight, reps, rpe, notes });
+      saveSets(sets);
+
+      updateRows();
+      updateExerciseFilter();
+      buildChart();
+      form.reset();
+      dateField.value = new Date().toISOString().slice(0,16);
+      rpeField.value = 7;
+    });
+
+    filter.addEventListener('change', buildChart);
+
+    function init() {
+      dateField.value = new Date().toISOString().slice(0,16);
+      updateRows();
+      updateExerciseFilter();
+      buildChart();
+    }
+
+    init();
+  </script>
+</body>
+</html>

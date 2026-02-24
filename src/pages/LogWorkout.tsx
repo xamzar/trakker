@@ -136,7 +136,7 @@ export default function LogWorkout() {
     const historyEntry = lastSets && setIndex < lastSets.length ? lastSets[setIndex] : null;
     const historyWeight = historyEntry?.weight;
     const fallback = exercise.sets[setIndex]?.weight ?? 0;
-    const hasHistory = historyEntry?.weight !== undefined && historyEntry?.weight !== null && historyWeight !== 0;
+    const hasHistory = historyEntry?.weight !== undefined && historyEntry?.weight !== null;
     return {
       weight: Math.max(0, historyWeight ?? fallback),
       hasHistory,
@@ -149,10 +149,7 @@ export default function LogWorkout() {
     const set = exercise.sets[guidedSetIndex];
     if (!set) return;
     const base = getBaseWeight(exercise, guidedSetIndex).weight;
-    if (delta === 0) {
-      updateSet(exercise.id, set.id, 'weight', set.weight);
-      return;
-    }
+    if (delta === 0) return;
     const nextWeight = Math.max(0, base + delta);
     updateSet(exercise.id, set.id, 'weight', nextWeight);
   }
@@ -228,7 +225,6 @@ export default function LogWorkout() {
             <span className="text-xs text-slate-400">Suggestion</span>
             <span
               className="text-sm font-semibold text-white"
-              aria-label={`Suggested weight ${guidedBaseWeight} ${weightUnit}`}
             >
               {guidedBaseWeight} {weightUnit}
             </span>

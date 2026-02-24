@@ -44,23 +44,26 @@ export default function Progress() {
 
   if (exerciseNames.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+      <div className="flex flex-col items-center justify-center h-64 text-slate-600">
         <p className="text-4xl mb-2">📈</p>
-        <p>Log workouts to see progress!</p>
+        <p className="text-sm">Log workouts to see progress!</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <h2 className="text-lg font-bold text-white">Progress</h2>
+    <div className="p-1 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-white">Progress</h2>
+        <span className="text-[11px] text-slate-500">Trends</span>
+      </div>
 
       <div>
-        <label className="text-xs text-gray-400 uppercase tracking-wider">Exercise</label>
+        <label className="text-[11px] text-slate-500 uppercase tracking-[0.18em]">Exercise</label>
         <select
           value={selectedExercise}
           onChange={e => setSelectedExercise(e.target.value)}
-          className="mt-1 w-full bg-gray-800 text-white rounded-xl px-4 py-3 text-sm border border-gray-700 focus:outline-none focus:border-emerald-500"
+          className="mt-1 w-full bg-slate-900/60 text-white rounded-xl px-4 py-3 text-sm border border-slate-800 focus:outline-none focus:border-emerald-500"
         >
           {exerciseNames.map(name => (
             <option key={name} value={name}>{name}</option>
@@ -71,25 +74,25 @@ export default function Progress() {
       <div className="flex gap-2">
         <button
           onClick={() => setMetric('maxWeight')}
-          className={`flex-1 py-2 rounded-xl text-xs font-semibold ${metric === 'maxWeight' ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400'}`}
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${metric === 'maxWeight' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/40' : 'bg-slate-900/60 text-slate-400 border-slate-800'}`}
         >
           Max Weight (kg)
         </button>
         <button
           onClick={() => setMetric('totalVolume')}
-          className={`flex-1 py-2 rounded-xl text-xs font-semibold ${metric === 'totalVolume' ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400'}`}
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${metric === 'totalVolume' ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/40' : 'bg-slate-900/60 text-slate-400 border-slate-800'}`}
         >
           Total Volume (kg)
         </button>
       </div>
 
       {data.length < 2 ? (
-        <div className="bg-gray-800 rounded-xl p-6 text-center text-gray-500">
-          <p>Not enough data yet.</p>
-          <p className="text-xs mt-1">Log this exercise at least twice to see a chart.</p>
+        <div className="bg-slate-900/60 rounded-xl p-6 text-center text-slate-500 border border-slate-800">
+          <p className="text-sm">Not enough data yet.</p>
+          <p className="text-[11px] mt-1">Log this exercise at least twice to see a chart.</p>
         </div>
       ) : (
-        <div className="bg-gray-800 rounded-xl p-4">
+        <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -108,13 +111,13 @@ export default function Progress() {
 
       {data.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-800 rounded-xl p-4">
-            <p className="text-xs text-gray-400">Personal Best</p>
-            <p className="text-xl font-bold text-emerald-400 mt-1">{Math.max(...data.map(d => d.maxWeight))} kg</p>
+          <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+            <p className="text-xs text-slate-500">Personal Best</p>
+            <p className="text-xl font-bold text-white mt-1">{Math.max(...data.map(d => d.maxWeight))} kg</p>
           </div>
-          <div className="bg-gray-800 rounded-xl p-4">
-            <p className="text-xs text-gray-400">Sessions</p>
-            <p className="text-xl font-bold text-emerald-400 mt-1">{data.length}</p>
+          <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+            <p className="text-xs text-slate-500">Sessions</p>
+            <p className="text-xl font-bold text-white mt-1">{data.length}</p>
           </div>
         </div>
       )}

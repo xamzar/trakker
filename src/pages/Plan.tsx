@@ -5,14 +5,14 @@ import { clearActivePlan, getActivePlan, saveActivePlan } from '../storage';
 import { PlusIcon, TrashIcon } from '../components/Icons';
 
 const DAY_TYPES: { value: DayType; label: string; color: string }[] = [
-  { value: 'rest',   label: 'Rest',       color: 'bg-gray-700 text-gray-300' },
-  { value: 'upper',  label: 'Upper',      color: 'bg-blue-900 text-blue-300' },
-  { value: 'lower',  label: 'Lower',      color: 'bg-purple-900 text-purple-300' },
-  { value: 'push',   label: 'Push',       color: 'bg-orange-900 text-orange-300' },
-  { value: 'pull',   label: 'Pull',       color: 'bg-yellow-900 text-yellow-300' },
-  { value: 'full',   label: 'Full Body',  color: 'bg-emerald-900 text-emerald-300' },
-  { value: 'cardio', label: 'Cardio',     color: 'bg-red-900 text-red-300' },
-  { value: 'custom', label: 'Custom',     color: 'bg-pink-900 text-pink-300' },
+  { value: 'rest',   label: 'Rest',       color: 'border-slate-700 text-slate-400' },
+  { value: 'upper',  label: 'Upper',      color: 'border-blue-400/40 text-blue-200' },
+  { value: 'lower',  label: 'Lower',      color: 'border-purple-400/40 text-purple-200' },
+  { value: 'push',   label: 'Push',       color: 'border-orange-400/40 text-orange-200' },
+  { value: 'pull',   label: 'Pull',       color: 'border-amber-400/40 text-amber-200' },
+  { value: 'full',   label: 'Full Body',  color: 'border-emerald-400/40 text-emerald-200' },
+  { value: 'cardio', label: 'Cardio',     color: 'border-rose-400/40 text-rose-200' },
+  { value: 'custom', label: 'Custom',     color: 'border-pink-400/40 text-pink-200' },
 ];
 
 const DAY_LABELS = ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Day 7',
@@ -123,11 +123,11 @@ export default function Plan() {
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-1 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Program Setup</h2>
+        <h2 className="text-lg font-semibold text-white">Program Setup</h2>
         {plan && (
-          <button onClick={handleClear} className="text-xs text-red-400 hover:text-red-300">
+          <button onClick={handleClear} className="text-xs text-slate-500 hover:text-red-400">
             Clear
           </button>
         )}
@@ -135,25 +135,25 @@ export default function Plan() {
 
       {/* Plan name */}
       <div>
-        <label className="text-xs text-gray-400 uppercase tracking-wider">Program Name</label>
+        <label className="text-[11px] text-slate-500 uppercase tracking-[0.18em]">Program Name</label>
         <input
           type="text"
           value={planName}
           onChange={e => setPlanName(e.target.value)}
           placeholder="e.g. PPL 6-Day"
-          className="mt-1 w-full bg-gray-800 text-white rounded-xl px-4 py-3 text-sm border border-gray-700 focus:outline-none focus:border-emerald-500"
+          className="mt-1 w-full bg-slate-900/60 text-white rounded-xl px-4 py-3 text-sm border border-slate-800 focus:outline-none focus:border-emerald-500"
         />
       </div>
 
       {/* Period length */}
       <div>
-        <label className="text-xs text-gray-400 uppercase tracking-wider">Cycle Length (days)</label>
+        <label className="text-[11px] text-slate-500 uppercase tracking-[0.18em]">Cycle Length (days)</label>
         <div className="mt-2 flex flex-wrap gap-2">
           {[3,4,5,6,7,10,14].map(n => (
             <button
               key={n}
               onClick={() => handlePeriodChange(n)}
-              className={`px-3 py-1.5 rounded-xl text-sm font-semibold ${periodDays === n ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400'}`}
+              className={`px-3 py-1.5 rounded-xl text-sm font-semibold border ${periodDays === n ? 'bg-emerald-500/10 text-emerald-200 border-emerald-500/40' : 'bg-slate-900/60 text-slate-400 border-slate-800'}`}
             >
               {n}
             </button>
@@ -163,18 +163,18 @@ export default function Plan() {
 
       {/* Day configuration */}
       <div className="space-y-2">
-        <p className="text-xs text-gray-400 uppercase tracking-wider">Configure Days</p>
+        <p className="text-[11px] text-slate-500 uppercase tracking-[0.18em]">Configure Days</p>
         {days.map(day => {
           const info = typeInfo(day.type);
           const isExpanded = expandedDay === day.dayIndex;
           return (
-            <div key={day.dayIndex} className="bg-gray-800 rounded-xl overflow-hidden">
+            <div key={day.dayIndex} className="bg-slate-900/60 rounded-xl overflow-hidden border border-slate-800">
               {/* Day header row */}
               <div
                 className="flex items-center gap-3 p-3 cursor-pointer"
                 onClick={() => setExpandedDay(isExpanded ? null : day.dayIndex)}
               >
-                <span className="text-xs text-gray-500 w-10 shrink-0">
+                <span className="text-xs text-slate-500 w-10 shrink-0">
                   {DAY_LABELS[day.dayIndex] ?? `Day ${day.dayIndex + 1}`}
                 </span>
 
@@ -183,36 +183,36 @@ export default function Plan() {
                   <select
                     value={day.type}
                     onChange={e => setDayType(day.dayIndex, e.target.value as DayType)}
-                    className="bg-gray-700 text-white rounded-lg px-2 py-1 text-xs border border-gray-600 focus:outline-none focus:border-emerald-500"
+                    className="bg-slate-900/60 text-white rounded-lg px-2.5 py-1.5 text-xs border border-slate-800 focus:outline-none focus:border-emerald-500"
                   >
                     {DAY_TYPES.map(t => (
                       <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                   {day.type !== 'rest' && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${info.color}`}>
+                    <span className={`text-[11px] px-2.5 py-1 rounded-full border ${info.color}`}>
                       {day.exercises.length} ex.
                     </span>
                   )}
                 </div>
                 {day.type !== 'rest' && (
-                  <span className="text-gray-500 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                  <span className="text-slate-600 text-xs">{isExpanded ? '▲' : '▼'}</span>
                 )}
               </div>
 
               {/* Expanded: custom label + exercises */}
               {isExpanded && day.type !== 'rest' && (
-                <div className="border-t border-gray-700 px-3 pb-3 pt-2 space-y-3">
+                <div className="border-t border-slate-800 px-3 pb-3 pt-2 space-y-3">
                   {/* Custom label */}
                   {day.type === 'custom' && (
                     <div>
-                      <label className="text-xs text-gray-500">Day Label</label>
+                      <label className="text-[11px] text-slate-500">Day Label</label>
                       <input
                         type="text"
                         value={day.label}
                         onChange={e => setDayLabel(day.dayIndex, e.target.value)}
                         placeholder="e.g. Chest & Triceps"
-                        className="mt-1 w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-xs border border-gray-600 focus:outline-none focus:border-emerald-500"
+                        className="mt-1 w-full bg-slate-900/60 text-white rounded-lg px-3 py-2 text-xs border border-slate-800 focus:outline-none focus:border-emerald-500"
                       />
                     </div>
                   )}
@@ -226,24 +226,24 @@ export default function Plan() {
                           value={ex.name}
                           onChange={e => updateExercise(day.dayIndex, ex.id, 'name', e.target.value)}
                           placeholder="Exercise name"
-                          className="flex-1 bg-gray-700 text-white rounded-lg px-3 py-2 text-xs border border-gray-600 focus:outline-none focus:border-emerald-500"
+                          className="flex-1 bg-slate-900/60 text-white rounded-lg px-3 py-2 text-xs border border-slate-800 focus:outline-none focus:border-emerald-500"
                         />
-                        <button onClick={() => removeExercise(day.dayIndex, ex.id)} className="text-red-400 hover:text-red-300 p-1">
+                        <button onClick={() => removeExercise(day.dayIndex, ex.id)} className="text-slate-500 hover:text-red-400 p-1">
                           <TrashIcon />
                         </button>
                       </div>
                       <div className="flex gap-3 pl-1">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500">Sets</span>
-                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultSets', Math.max(1, ex.defaultSets - 1))} className="w-6 h-6 bg-gray-700 rounded text-white text-sm flex items-center justify-center">−</button>
-                          <span className="w-5 text-center text-xs font-medium text-white">{ex.defaultSets}</span>
-                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultSets', ex.defaultSets + 1)} className="w-6 h-6 bg-gray-700 rounded text-white text-sm flex items-center justify-center">+</button>
+                          <span className="text-xs text-slate-500">Sets</span>
+                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultSets', Math.max(1, ex.defaultSets - 1))} className="w-7 h-7 bg-slate-900/60 border border-slate-800 rounded text-white text-sm flex items-center justify-center">−</button>
+                          <span className="w-6 text-center text-xs font-medium text-white">{ex.defaultSets}</span>
+                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultSets', ex.defaultSets + 1)} className="w-7 h-7 bg-slate-900/60 border border-slate-800 rounded text-white text-sm flex items-center justify-center">+</button>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500">Reps</span>
-                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultReps', Math.max(1, ex.defaultReps - 1))} className="w-6 h-6 bg-gray-700 rounded text-white text-sm flex items-center justify-center">−</button>
-                          <span className="w-5 text-center text-xs font-medium text-white">{ex.defaultReps}</span>
-                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultReps', ex.defaultReps + 1)} className="w-6 h-6 bg-gray-700 rounded text-white text-sm flex items-center justify-center">+</button>
+                          <span className="text-xs text-slate-500">Reps</span>
+                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultReps', Math.max(1, ex.defaultReps - 1))} className="w-7 h-7 bg-slate-900/60 border border-slate-800 rounded text-white text-sm flex items-center justify-center">−</button>
+                          <span className="w-6 text-center text-xs font-medium text-white">{ex.defaultReps}</span>
+                          <button onClick={() => updateExercise(day.dayIndex, ex.id, 'defaultReps', ex.defaultReps + 1)} className="w-7 h-7 bg-slate-900/60 border border-slate-800 rounded text-white text-sm flex items-center justify-center">+</button>
                         </div>
                       </div>
                     </div>
@@ -251,7 +251,7 @@ export default function Plan() {
 
                   <button
                     onClick={() => addExercise(day.dayIndex)}
-                    className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
+                    className="flex items-center gap-1 text-xs text-emerald-300 hover:text-emerald-200"
                   >
                     <PlusIcon /> Add Exercise
                   </button>
@@ -264,7 +264,7 @@ export default function Plan() {
 
       <button
         onClick={handleSave}
-        className={`w-full font-semibold py-3 rounded-xl text-sm shadow-lg transition-colors ${saved ? 'bg-green-600 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+        className={`w-full font-semibold py-3 rounded-xl text-sm transition-colors border ${saved ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-emerald-500/90 text-slate-950 border-emerald-500/60 hover:bg-emerald-400'}`}
       >
         {saved ? '✓ Saved!' : 'Save Program'}
       </button>

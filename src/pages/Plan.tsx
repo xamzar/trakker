@@ -1,19 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { DayType, PlanDay, PlanExercise, WorkoutPlan } from '../types';
 import { clearActivePlan, getActivePlan, saveActivePlan } from '../storage';
 import { PlusIcon, TrashIcon } from '../components/Icons';
-
-const DAY_TYPES: { value: DayType; label: string; color: string }[] = [
-  { value: 'rest',   label: 'Rest',       color: 'bg-gray-700 text-gray-300' },
-  { value: 'upper',  label: 'Upper',      color: 'bg-blue-900 text-blue-300' },
-  { value: 'lower',  label: 'Lower',      color: 'bg-purple-900 text-purple-300' },
-  { value: 'push',   label: 'Push',       color: 'bg-orange-900 text-orange-300' },
-  { value: 'pull',   label: 'Pull',       color: 'bg-yellow-900 text-yellow-300' },
-  { value: 'full',   label: 'Full Body',  color: 'bg-emerald-900 text-emerald-300' },
-  { value: 'cardio', label: 'Cardio',     color: 'bg-red-900 text-red-300' },
-  { value: 'custom', label: 'Custom',     color: 'bg-pink-900 text-pink-300' },
-];
+import { DAY_TYPES, getDayTypeInfo } from '../constants/dayTypes';
 
 const DAY_LABELS = ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Day 7',
   'Day 8','Day 9','Day 10','Day 11','Day 12','Day 13','Day 14'];
@@ -28,27 +18,17 @@ function defaultPlanDays(n: number): PlanDay[] {
 }
 
 function typeInfo(type: DayType) {
-  return DAY_TYPES.find(t => t.value === type) ?? DAY_TYPES[0];
+  return getDayTypeInfo(type);
 }
 
 export default function Plan() {
-  const [plan, setPlan] = useState<WorkoutPlan | null>(null);
+  const [plan, setPlan] = useState<WorkoutPlan | null>(() => getActivePlan());
   // editor state
-  const [planName, setPlanName] = useState('My Program');
-  const [periodDays, setPeriodDays] = useState(7);
-  const [days, setDays] = useState<PlanDay[]>(defaultPlanDays(7));
+  const [planName, setPlanName] = useState(() => plan?.name ?? 'My Program');
+  const [periodDays, setPeriodDays] = useState(() => plan?.periodDays ?? 7);
+  const [days, setDays] = useState<PlanDay[]>(() => plan?.days ?? defaultPlanDays(7));
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    const existing = getActivePlan();
-    if (existing) {
-      setPlan(existing);
-      setPlanName(existing.name);
-      setPeriodDays(existing.periodDays);
-      setDays(existing.days);
-    }
-  }, []);
 
   function handlePeriodChange(n: number) {
     setPeriodDays(n);

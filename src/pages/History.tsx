@@ -1,15 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { deleteSession, getSessions } from '../storage';
 import type { WorkoutSession } from '../types';
 import { TrashIcon } from '../components/Icons';
+import { formatWorkoutDate } from '../utils/date';
 
 export default function History() {
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [sessions, setSessions] = useState<WorkoutSession[]>(() => getSessions());
   const [expanded, setExpanded] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSessions(getSessions());
-  }, []);
 
   function handleDelete(id: string) {
     if (!confirm('Delete this workout?')) return;
@@ -38,7 +35,7 @@ export default function History() {
             <div>
               <p className="font-semibold text-white">{session.name}</p>
               <p className="text-gray-400 text-xs mt-0.5">
-                {new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
+                {formatWorkoutDate(session.date)}
               </p>
             </div>
             <div className="flex items-center gap-2">

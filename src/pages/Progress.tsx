@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getExerciseNames, getSessions } from '../storage';
 import type { WorkoutSession } from '../types';
+import { formatShortWorkoutDate } from '../utils/date';
 
 interface DataPoint {
   date: string;
@@ -10,15 +11,17 @@ interface DataPoint {
 }
 
 function getProgressData(sessions: WorkoutSession[], exerciseName: string): DataPoint[] {
+  const normalizedExerciseName = exerciseName.toLowerCase();
+
   return sessions
-    .filter(s => s.exercises.some(e => e.name.toLowerCase() === exerciseName.toLowerCase()))
+    .filter(session => session.exercises.some(exercise => exercise.name.toLowerCase() === normalizedExerciseName))
     .map(s => {
-      const exercises = s.exercises.filter(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+      const exercises = s.exercises.filter(exercise => exercise.name.toLowerCase() === normalizedExerciseName);
       const allSets = exercises.flatMap(e => e.sets);
       const maxWeight = Math.max(...allSets.map(s => s.weight));
       const totalVolume = allSets.reduce((sum, s) => sum + s.reps * s.weight, 0);
       return {
-        date: new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: formatShortWorkoutDate(s.date),
         maxWeight,
         totalVolume,
       };
@@ -27,18 +30,13 @@ function getProgressData(sessions: WorkoutSession[], exerciseName: string): Data
 }
 
 export default function Progress() {
-  const [exerciseNames, setExerciseNames] = useState<string[]>([]);
-  const [selectedExercise, setSelectedExercise] = useState<string>('');
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [metric, setMetric] = useState<'maxWeight' | 'totalVolume'>('maxWeight');
-
-  useEffect(() => {
+  const [exerciseNames] = useState<string[]>(() => getExerciseNames());
+  const [selectedExercise, setSelectedExercise] = useState<string>(() => {
     const names = getExerciseNames();
-    const allSessions = getSessions();
-    setExerciseNames(names);
-    setSessions(allSessions);
-    if (names.length > 0) setSelectedExercise(names[0]);
-  }, []);
+    return names[0] ?? '';
+  });
+  const [sessions] = useState<WorkoutSession[]>(() => getSessions());
+  const [metric, setMetric] = useState<'maxWeight' | 'totalVolume'>('maxWeight');
 
   const data = selectedExercise ? getProgressData(sessions, selectedExercise) : [];
 

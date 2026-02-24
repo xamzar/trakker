@@ -1,22 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getActivePlan, getLastSetsForExercise, getSessions, getTodayDayIndex } from '../storage';
-import type { PlanDay, WorkoutPlan, WorkoutSession } from '../types';
+import type { DayType, PlanDay, WorkoutPlan, WorkoutSession } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { getDayTypeInfo } from '../constants/dayTypes';
+import { formatRecentWorkoutDate } from '../utils/date';
 
-function DayTypeBadge({ type }: { type: string }) {
-  const colors: Record<string, string> = {
-    rest: 'bg-gray-700 text-gray-300',
-    upper: 'bg-blue-900 text-blue-300',
-    lower: 'bg-purple-900 text-purple-300',
-    push: 'bg-orange-900 text-orange-300',
-    pull: 'bg-yellow-900 text-yellow-300',
-    full: 'bg-emerald-900 text-emerald-300',
-    cardio: 'bg-red-900 text-red-300',
-    custom: 'bg-pink-900 text-pink-300',
-  };
+function DayTypeBadge({ type }: { type: DayType }) {
+  const info = getDayTypeInfo(type);
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${colors[type] ?? colors.custom}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${info.color}`}>
       {type}
     </span>
   );
@@ -24,19 +17,14 @@ function DayTypeBadge({ type }: { type: string }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [plan, setPlan] = useState<WorkoutPlan | null>(null);
-  const [todayDay, setTodayDay] = useState<PlanDay | null>(null);
-
-  useEffect(() => {
-    setSessions(getSessions().slice(0, 5));
+  const [sessions] = useState<WorkoutSession[]>(() => getSessions().slice(0, 5));
+  const [plan] = useState<WorkoutPlan | null>(() => getActivePlan());
+  const [todayDay] = useState<PlanDay | null>(() => {
     const activePlan = getActivePlan();
-    if (activePlan) {
-      setPlan(activePlan);
-      const idx = getTodayDayIndex(activePlan);
-      setTodayDay(activePlan.days[idx] ?? null);
-    }
-  }, []);
+    if (!activePlan) return null;
+    const dayIndex = getTodayDayIndex(activePlan);
+    return activePlan.days[dayIndex] ?? null;
+  });
 
   function startPlannedWorkout() {
     if (!todayDay || !plan) return;
@@ -125,7 +113,7 @@ export default function Dashboard() {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-semibold text-white">{session.name}</p>
-                    <p className="text-gray-400 text-xs mt-0.5">{new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{formatRecentWorkoutDate(session.date)}</p>
                   </div>
                   <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">
                     {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}

@@ -1,10 +1,30 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import Dashboard from './pages/Dashboard';
 import LogWorkout from './pages/LogWorkout';
 import History from './pages/History';
 import Progress from './pages/Progress';
 import Plan from './pages/Plan';
 import { HomeIcon, PlusCircleIcon, ClockIcon, ChartBarIcon, CalendarIcon } from './components/Icons';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  end?: boolean;
+}
+
+const navItems: NavItem[] = [
+  { to: '/', label: 'Home', icon: <HomeIcon />, end: true },
+  { to: '/log', label: 'Log', icon: <PlusCircleIcon /> },
+  { to: '/plan', label: 'Program', icon: <CalendarIcon /> },
+  { to: '/history', label: 'History', icon: <ClockIcon /> },
+  { to: '/progress', label: 'Progress', icon: <ChartBarIcon /> },
+];
+
+function navClassName(isActive: boolean): string {
+  return `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`;
+}
 
 export default function App() {
   return (
@@ -23,26 +43,17 @@ export default function App() {
           </Routes>
         </main>
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-gray-900 border-t border-gray-800 flex justify-around py-2 z-10">
-          <NavLink to="/" end className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <HomeIcon />
-            <span>Home</span>
-          </NavLink>
-          <NavLink to="/log" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <PlusCircleIcon />
-            <span>Log</span>
-          </NavLink>
-          <NavLink to="/plan" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <CalendarIcon />
-            <span>Program</span>
-          </NavLink>
-          <NavLink to="/history" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <ClockIcon />
-            <span>History</span>
-          </NavLink>
-          <NavLink to="/progress" className={({isActive}) => `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <ChartBarIcon />
-            <span>Progress</span>
-          </NavLink>
+          {navItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => navClassName(isActive)}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
         </nav>
       </div>
     </BrowserRouter>

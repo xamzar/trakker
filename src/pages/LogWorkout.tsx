@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import type { Exercise, Set } from '../types';
@@ -25,6 +25,26 @@ export default function LogWorkout() {
 
   const [workoutName, setWorkoutName] = useState(state.workoutName ?? '');
   const [exercises, setExercises] = useState<Exercise[]>(state.exercises ?? [newExercise()]);
+  const [guidedExerciseIdx, setGuidedExerciseIdx] = useState(0);
+  const [guidedSetIdx, setGuidedSetIdx] = useState(0);
+
+  useEffect(() => {
+    if (exercises.length === 0) return;
+    if (guidedExerciseIdx > exercises.length - 1) {
+      setGuidedExerciseIdx(exercises.length - 1);
+      setGuidedSetIdx(0);
+      return;
+    }
+    const active = exercises[guidedExerciseIdx];
+    setGuidedSetIdx(prev => Math.min(prev, Math.max(active.sets.length - 1, 0)));
+    if (!active.name.trim()) {
+      const fallback = exercises.findIndex(e => e.name.trim());
+      if (fallback !== -1 && fallback !== guidedExerciseIdx) {
+        setGuidedExerciseIdx(fallback);
+        setGuidedSetIdx(0);
+      }
+    }
+  }, [exercises, guidedExerciseIdx]);
 
   function addExercise() {
     setExercises(prev => [...prev, newExercise()]);
@@ -84,6 +104,35 @@ export default function LogWorkout() {
     navigate('/');
   }
 
+  function applySuggestedWeight(delta: number) {
+    const exercise = exercises[guidedExerciseIdx];
+    if (!exercise || !exercise.name.trim()) return;
+    const set = exercise.sets[guidedSetIdx];
+    if (!set) return;
+    const lastSets = getLastSetsForExercise(exercise.name.trim()) ?? [];
+    const lastWeight = lastSets[guidedSetIdx]?.weight ?? set.weight;
+    const nextWeight = Math.max(0, lastWeight + delta);
+    updateSet(exercise.id, set.id, 'weight', nextWeight);
+  }
+
+  function advanceGuidedPointer() {
+    const exercise = exercises[guidedExerciseIdx];
+    if (!exercise) return;
+    if (guidedSetIdx < exercise.sets.length - 1) {
+      setGuidedSetIdx(guidedSetIdx + 1);
+      return;
+    }
+    const nextIdx = Math.min(guidedExerciseIdx + 1, Math.max(exercises.length - 1, 0));
+    setGuidedExerciseIdx(nextIdx);
+    setGuidedSetIdx(0);
+  }
+
+  const guidedExercise = exercises[guidedExerciseIdx];
+  const guidedSet = guidedExercise?.sets[guidedSetIdx];
+  const guidedLastSets = guidedExercise?.name.trim() ? getLastSetsForExercise(guidedExercise.name.trim()) : null;
+  const guidedBaseWeight = guidedSet ? Math.max(0, guidedLastSets?.[guidedSetIdx]?.weight ?? guidedSet.weight) : 0;
+  const nextNamedExercise = exercises.slice(guidedExerciseIdx + 1).find(e => e.name.trim());
+
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {
     if (!exerciseName.trim()) return null;
@@ -97,7 +146,7 @@ export default function LogWorkout() {
     <div className="p-1 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Log Workout</h2>
-        <span className="text-[11px] text-slate-500">Manual entry</span>
+        <span className="text-[11px] text-slate-500">Guided + manual</span>
       </div>
 
       <div>
@@ -110,6 +159,62 @@ export default function LogWorkout() {
           className="mt-1 w-full bg-slate-900/60 text-white rounded-xl px-4 py-3 text-sm border border-slate-800 focus:outline-none focus:border-emerald-500"
         />
       </div>
+
+      {guidedExercise ? (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-300">Proactive guidance</p>
+              <p className="text-sm font-semibold text-white">
+                {guidedExercise.name || 'Name this exercise'}
+              </p>
+              <p className="text-xs text-slate-400">
+                Set {guidedSetIdx + 1} of {guidedExercise.sets.length}
+              </p>
+            </div>
+            {nextNamedExercise && (
+              <span className="text-[11px] text-slate-400">Next: {nextNamedExercise.name}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">Suggestion</span>
+            <span className="text-sm font-semibold text-white">{guidedBaseWeight} kg</span>
+            {guidedLastSets?.[guidedSetIdx]?.weight != null && (
+              <span className="text-[11px] text-slate-500">(last set)</span>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => applySuggestedWeight(0)}
+              className="rounded-lg border border-emerald-500/40 bg-slate-900/60 text-sm text-white py-2"
+            >
+              Same
+            </button>
+            <button
+              onClick={() => applySuggestedWeight(2.5)}
+              className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm text-emerald-200 py-2"
+            >
+              +2.5 kg
+            </button>
+            <button
+              onClick={() => applySuggestedWeight(-2.5)}
+              className="rounded-lg border border-slate-800 bg-slate-900/60 text-sm text-white py-2"
+            >
+              -2.5 kg
+            </button>
+          </div>
+          <button
+            onClick={advanceGuidedPointer}
+            className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-200 py-2"
+          >
+            Next set / exercise →
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-800 p-4 text-sm text-slate-500">
+          Add an exercise name to get proactive weight suggestions.
+        </div>
+      )}
 
       <div className="space-y-4">
         {exercises.map((exercise, exIdx) => {

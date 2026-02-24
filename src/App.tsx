@@ -1,30 +1,10 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-import type { ReactNode } from 'react';
 import Dashboard from './pages/Dashboard';
 import LogWorkout from './pages/LogWorkout';
 import History from './pages/History';
 import Progress from './pages/Progress';
 import Plan from './pages/Plan';
 import { HomeIcon, PlusCircleIcon, ClockIcon, ChartBarIcon, CalendarIcon } from './components/Icons';
-
-interface NavItem {
-  to: string;
-  label: string;
-  icon: ReactNode;
-  end?: boolean;
-}
-
-const navItems: NavItem[] = [
-  { to: '/', label: 'Home', icon: <HomeIcon />, end: true },
-  { to: '/log', label: 'Log', icon: <PlusCircleIcon /> },
-  { to: '/plan', label: 'Program', icon: <CalendarIcon /> },
-  { to: '/history', label: 'History', icon: <ClockIcon /> },
-  { to: '/progress', label: 'Progress', icon: <ChartBarIcon /> },
-];
-
-function navClassName(isActive: boolean): string {
-  return `flex flex-col items-center text-xs gap-0.5 px-3 py-1 rounded-lg ${isActive ? 'text-emerald-400' : 'text-gray-500'}`;
-}
 
 export default function App() {
   return (
@@ -50,20 +30,6 @@ export default function App() {
             <Route path="/progress" element={<Progress />} />
           </Routes>
         </main>
-<<<<<<< HEAD
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-gray-900 border-t border-gray-800 flex justify-around py-2 z-10">
-          {navItems.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => navClassName(isActive)}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-=======
         <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-md bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl flex justify-around py-2 z-10 shadow-xl shadow-black/30">
           <NavLink to="/" end className={({isActive}) => `flex flex-col items-center text-[11px] gap-0.5 px-3 py-2 rounded-xl transition-colors ${isActive ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/30' : 'text-slate-500 border border-transparent'}`}>
             <HomeIcon />
@@ -85,7 +51,6 @@ export default function App() {
             <ChartBarIcon />
             <span>Progress</span>
           </NavLink>
->>>>>>> 5d81881 (feat: refresh ui with minimal styling)
         </nav>
       </div>
     </BrowserRouter>

@@ -3,9 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { DayType, PlanDay, PlanExercise, WorkoutPlan } from '../types';
 import { clearActivePlan, getActivePlan, saveActivePlan } from '../storage';
 import { PlusIcon, TrashIcon } from '../components/Icons';
-<<<<<<< HEAD
-import { DAY_TYPES, getDayTypeInfo } from '../constants/dayTypes';
-=======
 
 const DAY_TYPES: { value: DayType; label: string; color: string }[] = [
   { value: 'rest',   label: 'Rest',       color: 'border-slate-700 text-slate-400' },
@@ -17,7 +14,6 @@ const DAY_TYPES: { value: DayType; label: string; color: string }[] = [
   { value: 'cardio', label: 'Cardio',     color: 'border-rose-400/40 text-rose-200' },
   { value: 'custom', label: 'Custom',     color: 'border-pink-400/40 text-pink-200' },
 ];
->>>>>>> 5d81881 (feat: refresh ui with minimal styling)
 
 const DAY_LABELS = ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Day 7',
   'Day 8','Day 9','Day 10','Day 11','Day 12','Day 13','Day 14'];
@@ -32,7 +28,7 @@ function defaultPlanDays(n: number): PlanDay[] {
 }
 
 function typeInfo(type: DayType) {
-  return getDayTypeInfo(type);
+  return DAY_TYPES.find(t => t.value === type) ?? DAY_TYPES[0];
 }
 
 export default function Plan() {

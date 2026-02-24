@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getActivePlan, getLastSetsForExercise, getSessions, getTodayDayIndex } from '../storage';
-import type { DayType, PlanDay, WorkoutPlan, WorkoutSession } from '../types';
+import type { PlanDay, WorkoutPlan, WorkoutSession } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { getDayTypeInfo } from '../constants/dayTypes';
-import { formatRecentWorkoutDate } from '../utils/date';
-
-<<<<<<< HEAD
-function DayTypeBadge({ type }: { type: DayType }) {
-  const info = getDayTypeInfo(type);
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${info.color}`}>
-=======
 function DayTypeBadge({ type }: { type: string }) {
   const colors: Record<string, string> = {
     rest: 'border-slate-700 text-slate-400',
@@ -25,7 +16,6 @@ function DayTypeBadge({ type }: { type: string }) {
   };
   return (
     <span className={`text-[11px] px-2.5 py-1 rounded-full font-medium border capitalize ${colors[type] ?? colors.custom}`}>
->>>>>>> 5d81881 (feat: refresh ui with minimal styling)
       {type}
     </span>
   );
@@ -131,11 +121,7 @@ export default function Dashboard() {
                 <div className="flex justify-between items-start gap-3">
                   <div>
                     <p className="font-semibold text-white">{session.name}</p>
-<<<<<<< HEAD
-                    <p className="text-gray-400 text-xs mt-0.5">{formatRecentWorkoutDate(session.date)}</p>
-=======
                     <p className="text-slate-500 text-xs mt-0.5">{new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
->>>>>>> 5d81881 (feat: refresh ui with minimal styling)
                   </div>
                   <span className="text-[11px] border border-slate-700 text-slate-300 px-2.5 py-1 rounded-full">
                     {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { deleteSession, getSessions } from '../storage';
 import type { WorkoutSession } from '../types';
 import { TrashIcon } from '../components/Icons';
-import { formatWorkoutDate } from '../utils/date';
 
 export default function History() {
   const [sessions, setSessions] = useState<WorkoutSession[]>(() => getSessions());
@@ -34,13 +33,8 @@ export default function History() {
           >
             <div>
               <p className="font-semibold text-white">{session.name}</p>
-<<<<<<< HEAD
-              <p className="text-gray-400 text-xs mt-0.5">
-                {formatWorkoutDate(session.date)}
-=======
               <p className="text-slate-500 text-xs mt-0.5">
                 {new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
->>>>>>> 5d81881 (feat: refresh ui with minimal styling)
               </p>
             </div>
             <div className="flex items-center gap-2">

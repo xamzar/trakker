@@ -104,14 +104,21 @@ export default function LogWorkout() {
     navigate('/');
   }
 
+  function getBaseWeight(exercise: Exercise | undefined, setIndex: number) {
+    if (!exercise) return { weight: 0, hasHistory: false };
+    const lastSets = exercise.name.trim() ? getLastSetsForExercise(exercise.name.trim()) : null;
+    const historyWeight = lastSets?.[setIndex]?.weight;
+    const fallback = exercise.sets[setIndex]?.weight ?? 0;
+    return { weight: Math.max(0, historyWeight ?? fallback), hasHistory: historyWeight != null };
+  }
+
   function applySuggestedWeight(delta: number) {
     const exercise = exercises[guidedExerciseIdx];
     if (!exercise || !exercise.name.trim()) return;
     const set = exercise.sets[guidedSetIdx];
     if (!set) return;
-    const lastSets = getLastSetsForExercise(exercise.name.trim()) ?? [];
-    const lastWeight = lastSets[guidedSetIdx]?.weight ?? set.weight;
-    const nextWeight = Math.max(0, lastWeight + delta);
+    const base = getBaseWeight(exercise, guidedSetIdx).weight;
+    const nextWeight = Math.max(0, base + delta);
     updateSet(exercise.id, set.id, 'weight', nextWeight);
   }
 
@@ -122,15 +129,15 @@ export default function LogWorkout() {
       setGuidedSetIdx(guidedSetIdx + 1);
       return;
     }
-    const nextIdx = Math.min(guidedExerciseIdx + 1, Math.max(exercises.length - 1, 0));
-    setGuidedExerciseIdx(nextIdx);
-    setGuidedSetIdx(0);
+    if (guidedExerciseIdx + 1 < exercises.length) {
+      setGuidedExerciseIdx(guidedExerciseIdx + 1);
+      setGuidedSetIdx(0);
+    }
   }
 
   const guidedExercise = exercises[guidedExerciseIdx];
-  const guidedSet = guidedExercise?.sets[guidedSetIdx];
-  const guidedLastSets = guidedExercise?.name.trim() ? getLastSetsForExercise(guidedExercise.name.trim()) : null;
-  const guidedBaseWeight = guidedSet ? Math.max(0, guidedLastSets?.[guidedSetIdx]?.weight ?? guidedSet.weight) : 0;
+  const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
+  const guidedBaseWeight = guidedWeightInfo.weight;
   const nextNamedExercise = exercises.slice(guidedExerciseIdx + 1).find(e => e.name.trim());
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
@@ -179,25 +186,28 @@ export default function LogWorkout() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Suggestion</span>
             <span className="text-sm font-semibold text-white">{guidedBaseWeight} kg</span>
-            {guidedLastSets?.[guidedSetIdx]?.weight != null && (
+            {guidedWeightInfo.hasHistory && (
               <span className="text-[11px] text-slate-500">(last set)</span>
             )}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => applySuggestedWeight(0)}
+              aria-label={`Keep weight at ${guidedBaseWeight} kg`}
               className="rounded-lg border border-emerald-500/40 bg-slate-900/60 text-sm text-white py-2"
             >
               Same
             </button>
             <button
               onClick={() => applySuggestedWeight(2.5)}
+              aria-label="Increase weight by 2.5 kg"
               className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm text-emerald-200 py-2"
             >
               +2.5 kg
             </button>
             <button
               onClick={() => applySuggestedWeight(-2.5)}
+              aria-label="Decrease weight by 2.5 kg"
               className="rounded-lg border border-slate-800 bg-slate-900/60 text-sm text-white py-2"
             >
               -2.5 kg
@@ -205,6 +215,7 @@ export default function LogWorkout() {
           </div>
           <button
             onClick={advanceGuidedPointer}
+            aria-label="Advance to next set or exercise"
             className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-200 py-2"
           >
             Next set / exercise →

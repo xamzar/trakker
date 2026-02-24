@@ -13,6 +13,13 @@ function newExercise(): Exercise {
   return { id: uuidv4(), name: '', sets: [newSet()] };
 }
 
+function findNextNamedExercise(startIndex: number, list: Exercise[]): number | null {
+  for (let i = startIndex; i < list.length; i += 1) {
+    if (list[i].name.trim()) return i;
+  }
+  return null;
+}
+
 interface LocationState {
   workoutName?: string;
   exercises?: Exercise[];
@@ -25,7 +32,8 @@ export default function LogWorkout() {
 
   const [workoutName, setWorkoutName] = useState(state.workoutName ?? '');
   const [exercises, setExercises] = useState<Exercise[]>(state.exercises ?? [newExercise()]);
-  const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(0);
+  const initialGuidedExerciseIndex = findNextNamedExercise(0, exercises) ?? 0;
+  const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(initialGuidedExerciseIndex);
   const [guidedSetIndex, setGuidedSetIndex] = useState(0);
   const [nextNamedIndex, setNextNamedIndex] = useState<number | null>(null);
   const weightUnit = 'kg';
@@ -45,8 +53,8 @@ export default function LogWorkout() {
     const active = exercises[guidedExerciseIndex];
     setGuidedSetIndex(prev => Math.min(prev, Math.max(active.sets.length - 1, 0)));
     if (!active.name.trim()) {
-      const fallback = exercises.findIndex(e => e.name.trim());
-      if (fallback !== -1 && fallback !== guidedExerciseIndex) {
+      const fallback = findNextNamedExercise(0, exercises);
+      if (fallback !== null && fallback !== guidedExerciseIndex) {
         setGuidedExerciseIndex(fallback);
         setGuidedSetIndex(0);
       }
@@ -54,13 +62,7 @@ export default function LogWorkout() {
     if (guidedExerciseIndex >= exercises.length - 1) {
       setNextNamedIndex(null);
     } else {
-      let found: number | null = null;
-      for (let i = guidedExerciseIndex + 1; i < exercises.length; i += 1) {
-        if (exercises[i].name.trim()) {
-          found = i;
-          break;
-        }
-      }
+      const found = findNextNamedExercise(guidedExerciseIndex + 1, exercises);
       setNextNamedIndex(found);
     }
   }, [exercises, guidedExerciseIndex]);
@@ -162,6 +164,7 @@ export default function LogWorkout() {
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIndex);
   const guidedBaseWeight = guidedWeightInfo.weight;
   const nextNamedExercise = nextNamedIndex !== null ? exercises[nextNamedIndex] : undefined;
+  const nextActionLabel = guidedExercise && guidedSetIndex < guidedExercise.sets.length - 1 ? 'Next set' : 'Next exercise';
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {
@@ -208,7 +211,12 @@ export default function LogWorkout() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Suggestion</span>
-            <span className="text-sm font-semibold text-white">{guidedBaseWeight} {weightUnit}</span>
+            <span
+              className="text-sm font-semibold text-white"
+              aria-label={`Suggested weight ${guidedBaseWeight} ${weightUnit}`}
+            >
+              {guidedBaseWeight} {weightUnit}
+            </span>
             {guidedWeightInfo.hasHistory && (
               <span className="text-[11px] text-slate-500">(last set)</span>
             )}
@@ -238,10 +246,10 @@ export default function LogWorkout() {
           </div>
           <button
             onClick={advanceGuidedPointer}
-            aria-label="Advance to next set or exercise"
+            aria-label={nextActionLabel}
             className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-200 py-2"
           >
-            Next set / exercise →
+            {nextActionLabel} →
           </button>
         </div>
       ) : (

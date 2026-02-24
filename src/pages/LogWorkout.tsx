@@ -36,7 +36,8 @@ export default function LogWorkout() {
     }
     if (guidedExerciseIdx > exercises.length - 1) {
       setGuidedExerciseIdx(exercises.length - 1);
-      setGuidedSetIdx(0);
+      const lastSets = exercises[exercises.length - 1]?.sets.length ?? 1;
+      setGuidedSetIdx(Math.max(lastSets - 1, 0));
       return;
     }
     const active = exercises[guidedExerciseIdx];
@@ -116,7 +117,7 @@ export default function LogWorkout() {
     const fallback = exercise.sets[setIndex]?.weight ?? 0;
     return {
       weight: Math.max(0, historyWeight ?? fallback),
-      hasHistory: historyEntry?.weight !== undefined && historyEntry?.weight !== null,
+      hasHistory: historyEntry?.weight != null,
     };
   }
 
@@ -147,6 +148,7 @@ export default function LogWorkout() {
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
   const guidedBaseWeight = guidedWeightInfo.weight;
   const nextNamedExercise = useMemo(() => {
+    if (guidedExerciseIdx >= exercises.length - 1) return undefined;
     for (let i = guidedExerciseIdx + 1; i < exercises.length; i += 1) {
       const ex = exercises[i];
       if (ex.name.trim()) return ex;

@@ -160,7 +160,7 @@ export default function LogWorkout() {
   const guidedExercise = exercises[guidedExerciseIdx];
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
   const guidedBaseWeight = guidedWeightInfo.weight;
-  const nextNamedExercise = nextNamedIdx != null ? exercises[nextNamedIdx] : undefined;
+  const nextNamedExercise = nextNamedIdx !== null && nextNamedIdx !== undefined ? exercises[nextNamedIdx] : undefined;
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {

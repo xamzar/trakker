@@ -35,8 +35,9 @@ export default function LogWorkout() {
 
   const [workoutName, setWorkoutName] = useState(state.workoutName ?? '');
   const [exercises, setExercises] = useState<Exercise[]>(state.exercises ?? [newExercise()]);
-  const initialGuidedExerciseIndex = findNextNamedExercise(0, exercises) ?? 0;
-  const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(initialGuidedExerciseIndex);
+  const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(
+    () => findNextNamedExercise(0, state.exercises ?? []) ?? 0,
+  );
   const [guidedSetIndex, setGuidedSetIndex] = useState(0);
   const [nextNamedIndex, setNextNamedIndex] = useState<number | null>(null);
   const weightUnit = DEFAULT_WEIGHT_UNIT;
@@ -69,7 +70,7 @@ export default function LogWorkout() {
       const found = findNextNamedExercise(guidedExerciseIndex + 1, exercises);
       setNextNamedIndex(found);
     }
-  }, [exercises, guidedExerciseIndex, guidedSetIndex]);
+  }, [exercises, guidedExerciseIndex]);
 
   function addExercise() {
     setExercises(prev => [...prev, newExercise()]);
@@ -171,7 +172,9 @@ export default function LogWorkout() {
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIndex);
   const guidedBaseWeight = guidedWeightInfo.weight;
   const nextNamedExercise = nextNamedIndex !== null ? exercises[nextNamedIndex] : undefined;
-  const nextActionLabel = guidedExercise && guidedSetIndex < guidedExercise.sets.length - 1 ? 'Next set' : 'Next exercise';
+  const hasMoreSets = guidedExercise ? guidedSetIndex < guidedExercise.sets.length - 1 : false;
+  const hasNextExercise = !!nextNamedExercise;
+  const nextActionLabel = hasMoreSets ? 'Next set' : hasNextExercise ? 'Next exercise' : 'Complete';
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {

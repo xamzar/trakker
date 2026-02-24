@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import type { Exercise, Set } from '../types';
@@ -29,7 +29,11 @@ export default function LogWorkout() {
   const [guidedSetIdx, setGuidedSetIdx] = useState(0);
 
   useEffect(() => {
-    if (exercises.length === 0) return;
+    if (exercises.length === 0) {
+      setGuidedExerciseIdx(0);
+      setGuidedSetIdx(0);
+      return;
+    }
     if (guidedExerciseIdx > exercises.length - 1) {
       setGuidedExerciseIdx(exercises.length - 1);
       setGuidedSetIdx(0);
@@ -107,9 +111,13 @@ export default function LogWorkout() {
   function getBaseWeight(exercise: Exercise | undefined, setIndex: number) {
     if (!exercise) return { weight: 0, hasHistory: false };
     const lastSets = exercise.name.trim() ? getLastSetsForExercise(exercise.name.trim()) : null;
-    const historyWeight = lastSets?.[setIndex]?.weight;
+    const historyEntry = lastSets && setIndex < lastSets.length ? lastSets[setIndex] : null;
+    const historyWeight = historyEntry?.weight;
     const fallback = exercise.sets[setIndex]?.weight ?? 0;
-    return { weight: Math.max(0, historyWeight ?? fallback), hasHistory: historyWeight != null };
+    return {
+      weight: Math.max(0, historyWeight ?? fallback),
+      hasHistory: historyEntry?.weight !== undefined && historyEntry?.weight !== null,
+    };
   }
 
   function applySuggestedWeight(delta: number) {
@@ -138,7 +146,10 @@ export default function LogWorkout() {
   const guidedExercise = exercises[guidedExerciseIdx];
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
   const guidedBaseWeight = guidedWeightInfo.weight;
-  const nextNamedExercise = exercises.slice(guidedExerciseIdx + 1).find(e => e.name.trim());
+  const nextNamedExercise = useMemo(
+    () => exercises.slice(guidedExerciseIdx + 1).find(e => e.name.trim()),
+    [exercises, guidedExerciseIdx],
+  );
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {

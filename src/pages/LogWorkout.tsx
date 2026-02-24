@@ -146,17 +146,13 @@ export default function LogWorkout() {
   const guidedExercise = exercises[guidedExerciseIdx];
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
   const guidedBaseWeight = guidedWeightInfo.weight;
-  const exerciseNameKey = useMemo(
-    () => exercises.map(e => `${e.id}:${e.name.trim()}`).join('|'),
-    [exercises],
-  );
   const nextNamedExercise = useMemo(() => {
     for (let i = guidedExerciseIdx + 1; i < exercises.length; i += 1) {
       const ex = exercises[i];
       if (ex.name.trim()) return ex;
     }
     return undefined;
-  }, [guidedExerciseIdx, exerciseNameKey, exercises.length]);
+  }, [guidedExerciseIdx, exercises]);
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {

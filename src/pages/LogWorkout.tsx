@@ -25,44 +25,45 @@ export default function LogWorkout() {
 
   const [workoutName, setWorkoutName] = useState(state.workoutName ?? '');
   const [exercises, setExercises] = useState<Exercise[]>(state.exercises ?? [newExercise()]);
-  const [guidedExerciseIdx, setGuidedExerciseIdx] = useState(0);
-  const [guidedSetIdx, setGuidedSetIdx] = useState(0);
-  const [nextNamedIdx, setNextNamedIdx] = useState<number | null>(null);
+  const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(0);
+  const [guidedSetIndex, setGuidedSetIndex] = useState(0);
+  const [nextNamedIndex, setNextNamedIndex] = useState<number | null>(null);
+  const weightUnit = 'kg';
 
   useEffect(() => {
     if (exercises.length === 0) {
-      setGuidedExerciseIdx(0);
-      setGuidedSetIdx(0);
+      setGuidedExerciseIndex(0);
+      setGuidedSetIndex(0);
       return;
     }
-    if (guidedExerciseIdx > exercises.length - 1) {
-      setGuidedExerciseIdx(exercises.length - 1);
+    if (guidedExerciseIndex > exercises.length - 1) {
+      setGuidedExerciseIndex(exercises.length - 1);
       const lastSets = exercises[exercises.length - 1]?.sets.length ?? 1;
-      setGuidedSetIdx(Math.max(lastSets - 1, 0));
+      setGuidedSetIndex(Math.max(lastSets - 1, 0));
       return;
     }
-    const active = exercises[guidedExerciseIdx];
-    setGuidedSetIdx(prev => Math.min(prev, Math.max(active.sets.length - 1, 0)));
+    const active = exercises[guidedExerciseIndex];
+    setGuidedSetIndex(prev => Math.min(prev, Math.max(active.sets.length - 1, 0)));
     if (!active.name.trim()) {
       const fallback = exercises.findIndex(e => e.name.trim());
-      if (fallback !== -1 && fallback !== guidedExerciseIdx) {
-        setGuidedExerciseIdx(fallback);
-        setGuidedSetIdx(0);
+      if (fallback !== -1 && fallback !== guidedExerciseIndex) {
+        setGuidedExerciseIndex(fallback);
+        setGuidedSetIndex(0);
       }
     }
-    if (guidedExerciseIdx >= exercises.length - 1) {
-      setNextNamedIdx(null);
+    if (guidedExerciseIndex >= exercises.length - 1) {
+      setNextNamedIndex(null);
     } else {
       let found: number | null = null;
-      for (let i = guidedExerciseIdx + 1; i < exercises.length; i += 1) {
+      for (let i = guidedExerciseIndex + 1; i < exercises.length; i += 1) {
         if (exercises[i].name.trim()) {
           found = i;
           break;
         }
       }
-      setNextNamedIdx(found);
+      setNextNamedIndex(found);
     }
-  }, [exercises, guidedExerciseIdx]);
+  }, [exercises, guidedExerciseIndex]);
 
   function addExercise() {
     setExercises(prev => [...prev, newExercise()]);
@@ -135,32 +136,32 @@ export default function LogWorkout() {
   }
 
   function applySuggestedWeight(delta: number) {
-    const exercise = exercises[guidedExerciseIdx];
+    const exercise = exercises[guidedExerciseIndex];
     if (!exercise || !exercise.name.trim()) return;
-    const set = exercise.sets[guidedSetIdx];
+    const set = exercise.sets[guidedSetIndex];
     if (!set) return;
-    const base = getBaseWeight(exercise, guidedSetIdx).weight;
+    const base = getBaseWeight(exercise, guidedSetIndex).weight;
     const nextWeight = Math.max(0, base + delta);
     updateSet(exercise.id, set.id, 'weight', nextWeight);
   }
 
   function advanceGuidedPointer() {
-    const exercise = exercises[guidedExerciseIdx];
+    const exercise = exercises[guidedExerciseIndex];
     if (!exercise) return;
-    if (guidedSetIdx < exercise.sets.length - 1) {
-      setGuidedSetIdx(prev => prev + 1);
+    if (guidedSetIndex < exercise.sets.length - 1) {
+      setGuidedSetIndex(prev => prev + 1);
       return;
     }
-    if (guidedExerciseIdx + 1 < exercises.length) {
-      setGuidedExerciseIdx(prev => prev + 1);
-      setGuidedSetIdx(0);
+    if (guidedExerciseIndex + 1 < exercises.length) {
+      setGuidedExerciseIndex(prev => prev + 1);
+      setGuidedSetIndex(0);
     }
   }
 
-  const guidedExercise = exercises[guidedExerciseIdx];
-  const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
+  const guidedExercise = exercises[guidedExerciseIndex];
+  const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIndex);
   const guidedBaseWeight = guidedWeightInfo.weight;
-  const nextNamedExercise = nextNamedIdx !== null && nextNamedIdx !== undefined ? exercises[nextNamedIdx] : undefined;
+  const nextNamedExercise = nextNamedIndex !== null ? exercises[nextNamedIndex] : undefined;
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {
@@ -198,7 +199,7 @@ export default function LogWorkout() {
                 {guidedExercise.name || 'Name this exercise'}
               </p>
               <p className="text-xs text-slate-400">
-                Set {guidedSetIdx + 1} of {guidedExercise.sets.length}
+                Set {guidedSetIndex + 1} of {guidedExercise.sets.length}
               </p>
             </div>
             {nextNamedExercise && (
@@ -207,7 +208,7 @@ export default function LogWorkout() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Suggestion</span>
-            <span className="text-sm font-semibold text-white">{guidedBaseWeight} kg</span>
+            <span className="text-sm font-semibold text-white">{guidedBaseWeight} {weightUnit}</span>
             {guidedWeightInfo.hasHistory && (
               <span className="text-[11px] text-slate-500">(last set)</span>
             )}
@@ -215,24 +216,24 @@ export default function LogWorkout() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => applySuggestedWeight(0)}
-              aria-label={`Keep weight at ${guidedBaseWeight} kg`}
+              aria-label={`Keep weight at ${guidedBaseWeight} ${weightUnit}`}
               className="rounded-lg border border-emerald-500/40 bg-slate-900/60 text-sm text-white py-2"
             >
               Same
             </button>
             <button
               onClick={() => applySuggestedWeight(2.5)}
-              aria-label="Increase weight by 2.5 kg"
+              aria-label={`Increase weight by 2.5 ${weightUnit}`}
               className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm text-emerald-200 py-2"
             >
-              +2.5 kg
+              +2.5 {weightUnit}
             </button>
             <button
               onClick={() => applySuggestedWeight(-2.5)}
-              aria-label="Decrease weight by 2.5 kg"
+              aria-label={`Decrease weight by 2.5 ${weightUnit}`}
               className="rounded-lg border border-slate-800 bg-slate-900/60 text-sm text-white py-2"
             >
-              -2.5 kg
+              -2.5 {weightUnit}
             </button>
           </div>
           <button

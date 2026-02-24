@@ -134,11 +134,11 @@ export default function LogWorkout() {
     const exercise = exercises[guidedExerciseIdx];
     if (!exercise) return;
     if (guidedSetIdx < exercise.sets.length - 1) {
-      setGuidedSetIdx(guidedSetIdx + 1);
+      setGuidedSetIdx(prev => prev + 1);
       return;
     }
     if (guidedExerciseIdx + 1 < exercises.length) {
-      setGuidedExerciseIdx(guidedExerciseIdx + 1);
+      setGuidedExerciseIdx(prev => prev + 1);
       setGuidedSetIdx(0);
     }
   }
@@ -146,10 +146,17 @@ export default function LogWorkout() {
   const guidedExercise = exercises[guidedExerciseIdx];
   const guidedWeightInfo = getBaseWeight(guidedExercise, guidedSetIdx);
   const guidedBaseWeight = guidedWeightInfo.weight;
-  const nextNamedExercise = useMemo(
-    () => exercises.slice(guidedExerciseIdx + 1).find(e => e.name.trim()),
-    [exercises, guidedExerciseIdx],
+  const exerciseNameKey = useMemo(
+    () => exercises.map(e => `${e.id}:${e.name.trim()}`).join('|'),
+    [exercises],
   );
+  const nextNamedExercise = useMemo(() => {
+    for (let i = guidedExerciseIdx + 1; i < exercises.length; i += 1) {
+      const ex = exercises[i];
+      if (ex.name.trim()) return ex;
+    }
+    return undefined;
+  }, [guidedExerciseIdx, exerciseNameKey, exercises.length]);
 
   /** Returns a hint string like "Last: 3×80 kg" for the most-recent sets of this exercise */
   function weightHint(exerciseName: string): string | null {

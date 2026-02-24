@@ -5,6 +5,9 @@ import type { Exercise, Set } from '../types';
 import { getLastSetsForExercise, saveSession } from '../storage';
 import { PlusIcon, TrashIcon } from '../components/Icons';
 
+const DEFAULT_WEIGHT_UNIT = 'kg';
+const DEFAULT_WEIGHT_STEP = 2.5;
+
 function newSet(): Set {
   return { id: uuidv4(), reps: 10, weight: 0 };
 }
@@ -36,7 +39,8 @@ export default function LogWorkout() {
   const [guidedExerciseIndex, setGuidedExerciseIndex] = useState(initialGuidedExerciseIndex);
   const [guidedSetIndex, setGuidedSetIndex] = useState(0);
   const [nextNamedIndex, setNextNamedIndex] = useState<number | null>(null);
-  const weightUnit = 'kg';
+  const weightUnit = DEFAULT_WEIGHT_UNIT;
+  const weightStep = DEFAULT_WEIGHT_STEP;
 
   useEffect(() => {
     if (exercises.length === 0) {
@@ -65,7 +69,7 @@ export default function LogWorkout() {
       const found = findNextNamedExercise(guidedExerciseIndex + 1, exercises);
       setNextNamedIndex(found);
     }
-  }, [exercises, guidedExerciseIndex]);
+  }, [exercises, guidedExerciseIndex, guidedSetIndex]);
 
   function addExercise() {
     setExercises(prev => [...prev, newExercise()]);
@@ -155,8 +159,11 @@ export default function LogWorkout() {
       return;
     }
     if (guidedExerciseIndex + 1 < exercises.length) {
-      setGuidedExerciseIndex(prev => prev + 1);
-      setGuidedSetIndex(0);
+      const nextNamed = findNextNamedExercise(guidedExerciseIndex + 1, exercises);
+      if (nextNamed !== null) {
+        setGuidedExerciseIndex(nextNamed);
+        setGuidedSetIndex(0);
+      }
     }
   }
 
@@ -230,18 +237,18 @@ export default function LogWorkout() {
               Same
             </button>
             <button
-              onClick={() => applySuggestedWeight(2.5)}
-              aria-label={`Increase weight by 2.5 ${weightUnit}`}
+              onClick={() => applySuggestedWeight(weightStep)}
+              aria-label={`Increase weight by ${weightStep} ${weightUnit}`}
               className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm text-emerald-200 py-2"
             >
-              +2.5 {weightUnit}
+              +{weightStep} {weightUnit}
             </button>
             <button
-              onClick={() => applySuggestedWeight(-2.5)}
-              aria-label={`Decrease weight by 2.5 ${weightUnit}`}
+              onClick={() => applySuggestedWeight(-weightStep)}
+              aria-label={`Decrease weight by ${weightStep} ${weightUnit}`}
               className="rounded-lg border border-slate-800 bg-slate-900/60 text-sm text-white py-2"
             >
-              -2.5 {weightUnit}
+              -{weightStep} {weightUnit}
             </button>
           </div>
           <button

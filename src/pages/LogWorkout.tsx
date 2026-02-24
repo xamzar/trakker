@@ -136,9 +136,10 @@ export default function LogWorkout() {
     const historyEntry = lastSets && setIndex < lastSets.length ? lastSets[setIndex] : null;
     const historyWeight = historyEntry?.weight;
     const fallback = exercise.sets[setIndex]?.weight ?? 0;
+    const hasHistory = historyEntry?.weight !== undefined && historyEntry?.weight !== null && historyWeight !== 0;
     return {
       weight: Math.max(0, historyWeight ?? fallback),
-      hasHistory: historyEntry?.weight !== undefined && historyEntry?.weight !== null,
+      hasHistory,
     };
   }
 
@@ -148,6 +149,10 @@ export default function LogWorkout() {
     const set = exercise.sets[guidedSetIndex];
     if (!set) return;
     const base = getBaseWeight(exercise, guidedSetIndex).weight;
+    if (delta === 0) {
+      updateSet(exercise.id, set.id, 'weight', set.weight);
+      return;
+    }
     const nextWeight = Math.max(0, base + delta);
     updateSet(exercise.id, set.id, 'weight', nextWeight);
   }
@@ -254,13 +259,17 @@ export default function LogWorkout() {
               -{weightStep} {weightUnit}
             </button>
           </div>
-          <button
-            onClick={advanceGuidedPointer}
-            aria-label={nextActionLabel}
-            className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-200 py-2"
-          >
-            {nextActionLabel} →
-          </button>
+          {hasMoreSets || hasNextExercise ? (
+            <button
+              onClick={advanceGuidedPointer}
+              aria-label={nextActionLabel}
+              className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm text-emerald-200 py-2"
+            >
+              {nextActionLabel} →
+            </button>
+          ) : (
+            <p className="text-xs text-slate-400 text-center">All sets logged for this workout.</p>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-slate-800 p-4 text-sm text-slate-500">

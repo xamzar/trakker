@@ -149,7 +149,6 @@ export default function LogWorkout() {
     const set = exercise.sets[guidedSetIndex];
     if (!set) return;
     const base = getBaseWeight(exercise, guidedSetIndex).weight;
-    if (delta === 0) return;
     const nextWeight = Math.max(0, base + delta);
     updateSet(exercise.id, set.id, 'weight', nextWeight);
   }
@@ -207,9 +206,9 @@ export default function LogWorkout() {
 
       {guidedExercise ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-300">Proactive guidance</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-emerald-300">Proactive guidance</p>
               <p className="text-sm font-semibold text-white">
                 {guidedExercise.name || 'Name this exercise'}
               </p>
